@@ -7,9 +7,12 @@ import (
 	"os"
 )
 
-var logger *log.Logger
+var (
+	logger  *log.Logger
+	logFile *os.File
+)
 
-func main() {
+func init() {
 
 	logFile, err := os.OpenFile("app-log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 
@@ -19,15 +22,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer logFile.Close()
-
 	logger = log.New(logFile, "simple-note-app:", log.Ldate)
+}
 
+func main() {
+	defer logFile.Close()
 	defer handlePanic()
 
 	http.HandleFunc("/", index)
 
-	err = http.ListenAndServe(":3000", nil)
+	err := http.ListenAndServe(":3000", nil)
 
 	if err != nil {
 		logger.Fatalln("Error starting the server, here is the error:", err)
