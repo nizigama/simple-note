@@ -30,6 +30,8 @@ func main() {
 	defer handlePanic()
 
 	http.HandleFunc("/", index)
+	http.HandleFunc("/login", login)
+	http.HandleFunc("/register", register)
 
 	err := http.ListenAndServe(":3000", nil)
 
