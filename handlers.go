@@ -66,7 +66,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MaxCost)
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 
 		if err != nil {
 			http.Error(w, "Password hashing failed, Contact support", http.StatusInternalServerError)
@@ -74,11 +74,10 @@ func register(w http.ResponseWriter, req *http.Request) {
 		}
 
 		newUser := users.User{
-			FirstName:  firstName,
-			LastName:   lastName,
-			Email:      email,
-			Password:   hashedPassword,
-			RememberMe: true,
+			FirstName: firstName,
+			LastName:  lastName,
+			Email:     email,
+			Password:  hashedPassword,
 		}
 
 		if err := newUser.Save(); err != nil {
@@ -87,7 +86,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 		}
 
 		w.Header().Set("Location", "/profile")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusSeeOther)
 
 	} else {
 		w.Header().Set("Content-Type", "text/html")
