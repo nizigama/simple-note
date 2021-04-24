@@ -5,6 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	users "github.com/nizigama/simple-note/models"
+	boltDB "github.com/nizigama/simple-note/services/database"
 )
 
 var (
@@ -23,9 +26,12 @@ func init() {
 	}
 
 	logger = log.New(logFile, "simple-note-app:", log.Ldate)
+
+	boltDB.InitDBConnection(logger, users.TableName)
 }
 
 func main() {
+	defer boltDB.CloseDBConnection()
 	defer logFile.Close()
 	defer handlePanic()
 
