@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	users "github.com/nizigama/simple-note/models"
+	auth "github.com/nizigama/simple-note/services/middleware"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -80,10 +83,23 @@ func register(w http.ResponseWriter, req *http.Request) {
 			Password:  hashedPassword,
 		}
 
-		if err := newUser.Save(); err != nil {
+		userID, err := newUser.Save()
+
+		if err != nil {
 			http.Error(w, "Signup failed, Contact support", http.StatusInternalServerError)
 			return
 		}
+
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		sessionID := r.Uint64()
+
+		auth.CreateSession(sessionID, int(userID))
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "sessionID",
+			Value: strconv.Itoa(int(sessionID)),
+		})
 
 		w.Header().Set("Location", "/profile")
 		w.WriteHeader(http.StatusSeeOther)
@@ -92,6 +108,11 @@ func register(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 		tpl.ExecuteTemplate(w, "register.html", time.Now().Year())
 	}
+}
+
+func profile(w http.ResponseWriter, req *http.Request) {
+	// w.Header().Set("Content-Type", "text/html")
+	// tpl.ExecuteTemplate(w, "profile.html", time.Now().Year())
 }
 
 func validateEmail(email string) error {
