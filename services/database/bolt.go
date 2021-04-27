@@ -89,7 +89,7 @@ func Show(itemID uint64, tableName string) (map[string]interface{}, error) {
 			return fmt.Errorf("no such table found")
 		}
 
-		var id []byte
+		id := make([]byte, 8)
 
 		binary.LittleEndian.PutUint32(id, uint32(itemID))
 
