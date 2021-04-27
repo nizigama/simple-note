@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	users "github.com/nizigama/simple-note/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Session struct {
@@ -61,6 +63,15 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusSeeOther)
 	})
+}
+
+func CheckCredentials(storedPassword, givenPassword []byte) error {
+
+	fmt.Println(storedPassword, givenPassword)
+	if err := bcrypt.CompareHashAndPassword(storedPassword, givenPassword); err != nil {
+		return err
+	}
+	return nil
 }
 
 func CreateSession(sessionID uint64, userID int) {

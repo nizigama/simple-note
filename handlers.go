@@ -26,6 +26,53 @@ func index(w http.ResponseWriter, req *http.Request) {
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method == http.MethodPost {
+		if err := req.ParseForm(); err != nil {
+			http.Error(w, "Error parsing your request", http.StatusUnprocessableEntity)
+		}
+
+		email, password, remember := req.Form.Get("email"), req.Form.Get("pass"), req.Form.Get("remember")
+
+		fmt.Println(email, password, remember)
+
+		if isValid := validateEmail(email); isValid != nil {
+			http.Error(w, "invalid email address", http.StatusUnprocessableEntity)
+			return
+		}
+		if strings.Trim(password, " ") == "" {
+			http.Error(w, "Password is required", http.StatusUnprocessableEntity)
+			return
+		}
+
+		user, userID, err := users.ReadSingleByEmail(email)
+		if err != nil {
+			http.Error(w, "Wrong credentials, there is no such email in our records", http.StatusForbidden)
+			return
+		}
+
+		err = auth.CheckCredentials([]byte(user.Password), []byte(password))
+
+		if err != nil {
+			http.Error(w, "Wrong credentials", http.StatusForbidden)
+			return
+		}
+
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		sessionID := r.Uint64()
+
+		auth.CreateSession(sessionID, int(userID))
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "sessionID",
+			Value: strconv.Itoa(int(sessionID)),
+		})
+
+		w.Header().Set("Location", "/profile")
+		w.WriteHeader(http.StatusSeeOther)
+
+	}
 	w.Header().Set("Content-Type", "text/html")
 	tpl.ExecuteTemplate(w, "login.html", time.Now().Year())
 }
