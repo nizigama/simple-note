@@ -11,6 +11,7 @@ import (
 	auth "github.com/nizigama/simple-note/services/middleware"
 )
 
+// TODO: work on login feature
 var (
 	logger  *log.Logger
 	logFile *os.File
@@ -37,8 +38,8 @@ func main() {
 	defer handlePanic()
 
 	http.HandleFunc("/", index)
-	http.HandleFunc("/login", login)
-	http.HandleFunc("/register", register)
+	http.Handle("/login", auth.Authorize(login))
+	http.Handle("/register", auth.Authorize(register))
 	http.Handle("/profile", auth.Authorize(profile))
 
 	err := http.ListenAndServe(":3000", nil)
