@@ -54,6 +54,10 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 		}
 
 		// no sessionID found
+		if c.Value != "" {
+			c.MaxAge = -1
+			http.SetCookie(w, c)
+		}
 		w.Header().Set("Location", "/login")
 		w.WriteHeader(http.StatusSeeOther)
 	})
