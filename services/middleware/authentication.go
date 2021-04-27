@@ -20,6 +20,10 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 		c, err := req.Cookie("sessionID")
 		if err != nil {
 			// no cookie with sessionID found
+			if req.URL.Path == "/login" || req.URL.Path == "/register" {
+				f(w, req)
+				return
+			}
 			w.Header().Set("Location", "/login")
 			w.WriteHeader(http.StatusSeeOther)
 			return
@@ -29,6 +33,10 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 				_, err := users.Read(uint64(v.UserID))
 				if err != nil {
 					// no user found
+					if req.URL.Path == "/login" || req.URL.Path == "/register" {
+						f(w, req)
+						return
+					}
 					w.Header().Set("Location", "/login")
 					w.WriteHeader(http.StatusSeeOther)
 					return
