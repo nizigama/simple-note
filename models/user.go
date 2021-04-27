@@ -8,7 +8,7 @@ type User struct {
 	FirstName string
 	LastName  string
 	Email     string
-	Password  []byte
+	Password  string
 }
 
 const (
@@ -57,7 +57,7 @@ func ReadAll() ([]User, error) {
 			FirstName: user["firstName"].(string),
 			LastName:  user["lastName"].(string),
 			Email:     user["email"].(string),
-			Password:  []byte(user["password"].(string)),
+			Password:  user["password"].(string),
 		})
 	}
 

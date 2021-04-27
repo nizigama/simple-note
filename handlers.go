@@ -80,7 +80,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			FirstName: firstName,
 			LastName:  lastName,
 			Email:     email,
-			Password:  hashedPassword,
+			Password:  string(hashedPassword),
 		}
 
 		userID, err := newUser.Save()
