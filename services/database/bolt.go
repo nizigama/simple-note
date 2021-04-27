@@ -114,6 +114,46 @@ func Show(itemID uint64, tableName string) (map[string]interface{}, error) {
 	return itemData, nil
 }
 
+func All(tableName string) ([]map[string]interface{}, error) {
+
+	var itemsData []map[string]interface{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		err = b.ForEach(func(k []byte, v []byte) error {
+
+			itemData := map[string]interface{}{}
+
+			err = json.Unmarshal(v, &itemData)
+
+			if err != nil {
+				return err
+			}
+
+			itemsData = append(itemsData, itemData)
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("no such item found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return itemsData, nil
+}
+
 // CloseDBConnection closes the database connection and releases the db so that other apps can use it
 func CloseDBConnection() {
 	db.Close()
