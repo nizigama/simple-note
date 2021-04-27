@@ -76,6 +76,44 @@ func Store(item map[string]interface{}, tableName string) (uint64, error) {
 	return userID, nil
 }
 
+func Show(itemID uint64, tableName string) (map[string]interface{}, error) {
+
+	var itemData map[string]interface{}
+	result := []byte{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		var id []byte
+
+		binary.LittleEndian.PutUint32(id, uint32(itemID))
+
+		result = b.Get(id)
+		if result == nil {
+			return fmt.Errorf("no such item found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(result, &itemData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return itemData, nil
+}
+
 // CloseDBConnection closes the database connection and releases the db so that other apps can use it
 func CloseDBConnection() {
 	db.Close()

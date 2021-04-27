@@ -27,3 +27,19 @@ func (u User) Save() (uint64, error) {
 
 	return boltDB.Store(userMap, TableName)
 }
+
+func Read(userID uint64) (User, error) {
+
+	user, err := boltDB.Show(userID, TableName)
+
+	if err != nil {
+		return User{}, err
+	}
+
+	return User{
+		FirstName: user["firstName"].(string),
+		LastName:  user["lastName"].(string),
+		Email:     user["email"].(string),
+		Password:  user["password"].([]byte),
+	}, nil
+}
