@@ -63,3 +63,19 @@ func ReadAll() ([]User, error) {
 
 	return users, nil
 }
+
+func ReadSingleByEmail(userEmail string) (User, uint64, error) {
+
+	user, index, err := boltDB.SingleByStringField(TableName, "email", userEmail)
+
+	if err != nil {
+		return User{}, 0, err
+	}
+
+	return User{
+		FirstName: user["firstName"].(string),
+		LastName:  user["lastName"].(string),
+		Email:     user["email"].(string),
+		Password:  user["password"].(string),
+	}, index, nil
+}
