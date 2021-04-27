@@ -8,6 +8,7 @@ import (
 
 	users "github.com/nizigama/simple-note/models"
 	boltDB "github.com/nizigama/simple-note/services/database"
+	auth "github.com/nizigama/simple-note/services/middleware"
 )
 
 var (
@@ -38,6 +39,7 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/register", register)
+	http.Handle("/profile", auth.Authorize(profile))
 
 	err := http.ListenAndServe(":3000", nil)
 
