@@ -42,3 +42,24 @@ func Read(userID uint64) (User, error) {
 		Email:     user["email"].(string),
 	}, nil
 }
+
+func ReadAll() ([]User, error) {
+
+	var users []User
+	res, err := boltDB.All(TableName)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range res {
+		users = append(users, User{
+			FirstName: user["firstName"].(string),
+			LastName:  user["lastName"].(string),
+			Email:     user["email"].(string),
+			Password:  []byte(user["password"].(string)),
+		})
+	}
+
+	return users, nil
+}
