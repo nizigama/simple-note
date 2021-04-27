@@ -154,6 +154,92 @@ func All(tableName string) ([]map[string]interface{}, error) {
 	return itemsData, nil
 }
 
+func SingleByStringField(tableName, fieldName, fieldValue string) (map[string]interface{}, uint64, error) {
+
+	var matchingItemData map[string]interface{}
+	var key uint64
+
+	err := db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		err = b.ForEach(func(k []byte, v []byte) error {
+
+			itemData := map[string]interface{}{}
+
+			err = json.Unmarshal(v, &itemData)
+
+			if err != nil {
+				return err
+			}
+
+			if itemData[fieldName] == fieldValue {
+				key = binary.LittleEndian.Uint64(k)
+				matchingItemData = itemData
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("no such item found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return matchingItemData, key, nil
+}
+
+func ManyByStringField(tableName, fieldName, fieldValue string) ([]map[string]interface{}, error) {
+
+	var matchingItemsData []map[string]interface{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		err = b.ForEach(func(k []byte, v []byte) error {
+
+			itemData := map[string]interface{}{}
+
+			err = json.Unmarshal(v, &itemData)
+
+			if err != nil {
+				return err
+			}
+
+			if itemData[fieldName] == fieldValue {
+				matchingItemsData = append(matchingItemsData, itemData)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("no such item found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return matchingItemsData, nil
+}
+
 // CloseDBConnection closes the database connection and releases the db so that other apps can use it
 func CloseDBConnection() {
 	db.Close()
