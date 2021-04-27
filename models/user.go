@@ -21,7 +21,7 @@ func (u User) Save() (uint64, error) {
 	userMap := map[string]interface{}{
 		"firstName": u.FirstName,
 		"lastName":  u.LastName,
-		"email":     u.LastName,
+		"email":     u.Email,
 		"password":  u.Password,
 	}
 
@@ -40,6 +40,5 @@ func Read(userID uint64) (User, error) {
 		FirstName: user["firstName"].(string),
 		LastName:  user["lastName"].(string),
 		Email:     user["email"].(string),
-		Password:  user["password"].([]byte),
 	}, nil
 }
