@@ -16,7 +16,7 @@ const (
 )
 
 // Save persists the user in the struct in the database
-func (u User) Save() error {
+func (u User) Save() (uint64, error) {
 
 	userMap := map[string]interface{}{
 		"firstName": u.FirstName,

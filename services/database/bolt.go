@@ -39,33 +39,41 @@ func InitDBConnection(logger *log.Logger, tables ...string) {
 	}
 }
 
-func Store(item map[string]interface{}, tableName string) error {
+func Store(item map[string]interface{}, tableName string) (uint64, error) {
 
 	var id []byte = make([]byte, 8)
 	xi, err := json.Marshal(item)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return db.Update(func(tx *bolt.Tx) error {
+	var userID uint64
+
+	err = db.Update(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(tableName))
 
 		if b == nil {
-			return fmt.Errorf("No such table found")
+			return fmt.Errorf("no such table found")
 		}
 
-		nxtID, err := b.NextSequence()
+		userID, err = b.NextSequence()
 
 		if err != nil {
 			return err
 		}
 
-		binary.LittleEndian.PutUint32(id, uint32(nxtID))
+		binary.LittleEndian.PutUint32(id, uint32(userID))
 
 		return b.Put(id, xi)
 	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return userID, nil
 }
 
 // CloseDBConnection closes the database connection and releases the db so that other apps can use it
