@@ -184,7 +184,7 @@ func SingleByStringField(tableName, fieldName, fieldValue string) (map[string]in
 
 			return nil
 		})
-		if err != nil {
+		if err != nil || key == 0 {
 			return fmt.Errorf("no such item found")
 		}
 
@@ -226,7 +226,7 @@ func ManyByStringField(tableName, fieldName, fieldValue string) ([]map[string]in
 
 			return nil
 		})
-		if err != nil {
+		if err != nil || len(matchingItemsData) == 0 {
 			return fmt.Errorf("no such item found")
 		}
 
