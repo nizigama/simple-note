@@ -32,9 +32,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Error parsing your request", http.StatusUnprocessableEntity)
 		}
 
-		email, password, remember := req.Form.Get("email"), req.Form.Get("pass"), req.Form.Get("remember")
-
-		fmt.Println(email, password, remember)
+		email, password := req.Form.Get("email"), req.Form.Get("pass")
 
 		if isValid := validateEmail(email); isValid != nil {
 			http.Error(w, "invalid email address", http.StatusUnprocessableEntity)

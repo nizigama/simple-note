@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -67,7 +66,6 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 
 func CheckCredentials(storedPassword, givenPassword []byte) error {
 
-	fmt.Println(storedPassword, givenPassword)
 	if err := bcrypt.CompareHashAndPassword(storedPassword, givenPassword); err != nil {
 		return err
 	}
