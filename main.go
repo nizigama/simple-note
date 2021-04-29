@@ -41,6 +41,7 @@ func main() {
 	http.Handle("/login", auth.Authorize(login))
 	http.Handle("/register", auth.Authorize(register))
 	http.Handle("/profile", auth.Authorize(profile))
+	http.Handle("/profile-picture", auth.Authorize(profilePicture))
 
 	err := http.ListenAndServe(":3000", nil)
 

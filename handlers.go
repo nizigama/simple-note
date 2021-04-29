@@ -169,6 +169,12 @@ func profile(w http.ResponseWriter, req *http.Request) {
 	})
 }
 
+func profilePicture(w http.ResponseWriter, req *http.Request) {
+	_ = getLoggedInUser(req)
+
+	http.ServeFile(w, req, "assets/avatar.png")
+}
+
 func validateEmail(email string) error {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
