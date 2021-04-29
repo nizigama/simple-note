@@ -17,7 +17,8 @@ import (
 var tpl *template.Template
 
 func init() {
-	tpl = template.Must(template.ParseGlob("./templates/*.html"))
+	tpl = template.Must(template.ParseGlob("./templates/includes/*.html"))
+	tpl = template.Must(tpl.ParseGlob("./templates/*.html"))
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
@@ -156,8 +157,16 @@ func register(w http.ResponseWriter, req *http.Request) {
 }
 
 func profile(w http.ResponseWriter, req *http.Request) {
-	// w.Header().Set("Content-Type", "text/html")
-	// tpl.ExecuteTemplate(w, "profile.html", time.Now().Year())
+
+	year := time.Now().Year()
+	user := getLoggedInUser(req)
+
+	w.Header().Set("Content-Type", "text/html")
+	// tpl.ExecuteTemplate(w, "profile.html", []string{"aaa", "bbb"})
+	tpl.ExecuteTemplate(w, "profile.html", map[string]interface{}{
+		"user": user,
+		"year": year,
+	})
 }
 
 func validateEmail(email string) error {
@@ -185,4 +194,20 @@ func validateEmail(email string) error {
 	}
 
 	return nil
+}
+
+func getLoggedInUser(req *http.Request) users.User {
+
+	c, _ := req.Cookie("sessionID")
+
+	var user users.User
+
+	for _, v := range auth.Sessions {
+		if c.Value == strconv.Itoa(int(v.ID)) {
+			user, _ = users.Read(uint64(v.UserID))
+			break
+		}
+	}
+
+	return user
 }
