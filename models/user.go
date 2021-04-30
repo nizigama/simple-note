@@ -9,6 +9,7 @@ type User struct {
 	LastName  string
 	Email     string
 	Password  string
+	Picture   string
 }
 
 const (
@@ -23,6 +24,7 @@ func (u User) Save() (uint64, error) {
 		"lastName":  u.LastName,
 		"email":     u.Email,
 		"password":  u.Password,
+		"picture":   "avatar.png",
 	}
 
 	return boltDB.Store(userMap, TableName)
@@ -40,6 +42,8 @@ func Read(userID uint64) (User, error) {
 		FirstName: user["firstName"].(string),
 		LastName:  user["lastName"].(string),
 		Email:     user["email"].(string),
+		Password:  user["password"].(string),
+		Picture:   user["picture"].(string),
 	}, nil
 }
 
@@ -58,6 +62,7 @@ func ReadAll() ([]User, error) {
 			LastName:  user["lastName"].(string),
 			Email:     user["email"].(string),
 			Password:  user["password"].(string),
+			Picture:   user["picture"].(string),
 		})
 	}
 
@@ -77,5 +82,18 @@ func ReadSingleByEmail(userEmail string) (User, uint64, error) {
 		LastName:  user["lastName"].(string),
 		Email:     user["email"].(string),
 		Password:  user["password"].(string),
+		Picture:   user["picture"].(string),
 	}, index, nil
+}
+
+func UpdateUser(u User, itemID int) error {
+	userMap := map[string]interface{}{
+		"firstName": u.FirstName,
+		"lastName":  u.LastName,
+		"email":     u.Email,
+		"password":  u.Password,
+		"picture":   u.Picture,
+	}
+
+	return boltDB.Update(userMap, TableName, uint64(itemID))
 }
