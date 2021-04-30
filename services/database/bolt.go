@@ -240,6 +240,63 @@ func ManyByStringField(tableName, fieldName, fieldValue string) ([]map[string]in
 	return matchingItemsData, nil
 }
 
+func Update(item map[string]interface{}, tableName string, itemID uint64) error {
+
+	xi, err := json.Marshal(item)
+
+	if err != nil {
+		return err
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		id := make([]byte, 8)
+
+		binary.LittleEndian.PutUint32(id, uint32(itemID))
+
+		result := b.Get(id)
+
+		if result == nil {
+			return fmt.Errorf("no item found")
+		}
+
+		err = b.Delete(id)
+
+		if err != nil {
+			return fmt.Errorf("error deleting user")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		id := make([]byte, 8)
+
+		binary.LittleEndian.PutUint32(id, uint32(itemID))
+
+		return b.Put(id, xi)
+	})
+
+	return nil
+}
+
 // CloseDBConnection closes the database connection and releases the db so that other apps can use it
 func CloseDBConnection() {
 	db.Close()
