@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"text/template"
@@ -127,6 +129,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			LastName:  lastName,
 			Email:     email,
 			Password:  string(hashedPassword),
+			Picture:   "avatar.png",
 		}
 
 		userID, err := newUser.Save()
@@ -159,20 +162,59 @@ func register(w http.ResponseWriter, req *http.Request) {
 func profile(w http.ResponseWriter, req *http.Request) {
 
 	year := time.Now().Year()
-	user := getLoggedInUser(req)
+	user, userID := getLoggedInUser(req)
 
+	// TODO: code to upload and save profile picture
+	if req.Method == http.MethodPost {
+		f, h, err := req.FormFile("picture")
+
+		if err != nil {
+			http.Error(w, "No image file found", http.StatusNotFound)
+			return
+		}
+		xb, err := ioutil.ReadAll(f)
+		if err != nil {
+			http.Error(w, "Error reading file", http.StatusInternalServerError)
+			return
+		}
+		xs := strings.Split(h.Filename, ".")
+		ext := xs[len(xs)-1]
+		tsp := time.Now().UnixNano()
+
+		fileName := fmt.Sprintf("%v.%s", tsp, ext)
+		file, err := os.Create("./assets/" + fileName)
+
+		if err != nil {
+			http.Error(w, "Error saving file", http.StatusInternalServerError)
+			return
+		}
+
+		file.Write(xb)
+		if user.Picture != "avatar.png" {
+			os.Remove("./assets/" + user.Picture)
+		}
+
+		user.Picture = fileName
+
+		if err := users.UpdateUser(user, userID); err != nil {
+			http.Error(w, "Error updating database", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	w.Header().Set("Content-Type", "text/html")
-	// tpl.ExecuteTemplate(w, "profile.html", []string{"aaa", "bbb"})
 	tpl.ExecuteTemplate(w, "profile.html", map[string]interface{}{
 		"user": user,
+		"r":    r.Uint64(),
 		"year": year,
 	})
 }
 
 func profilePicture(w http.ResponseWriter, req *http.Request) {
-	_ = getLoggedInUser(req)
+	user, _ := getLoggedInUser(req)
 
-	http.ServeFile(w, req, "assets/avatar.png")
+	http.ServeFile(w, req, "assets/"+user.Picture)
 }
 
 func validateEmail(email string) error {
@@ -202,18 +244,20 @@ func validateEmail(email string) error {
 	return nil
 }
 
-func getLoggedInUser(req *http.Request) users.User {
+func getLoggedInUser(req *http.Request) (users.User, int) {
 
 	c, _ := req.Cookie("sessionID")
 
 	var user users.User
+	var userID int
 
 	for _, v := range auth.Sessions {
 		if c.Value == strconv.Itoa(int(v.ID)) {
+			userID = v.UserID
 			user, _ = users.Read(uint64(v.UserID))
 			break
 		}
 	}
 
-	return user
+	return user, userID
 }
