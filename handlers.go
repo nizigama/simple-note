@@ -24,8 +24,29 @@ func init() {
 }
 
 func index(w http.ResponseWriter, req *http.Request) {
+
+	c, err := req.Cookie("sessionID")
+	data := map[string]interface{}{
+		"year":     time.Now().Year(),
+		"loggedIn": false,
+	}
+
+	if err == nil {
+		// var user users.User
+		// var userID int
+
+		for _, v := range auth.Sessions {
+			if c.Value == strconv.Itoa(int(v.ID)) {
+				// userID = v.UserID
+				// user, _ = users.Read(uint64(v.UserID))
+				data["loggedIn"] = true
+				break
+			}
+		}
+	}
+
 	w.Header().Set("Content-Type", "text/html")
-	tpl.ExecuteTemplate(w, "index.html", time.Now().Year())
+	tpl.ExecuteTemplate(w, "index.html", data)
 }
 
 func login(w http.ResponseWriter, req *http.Request) {
