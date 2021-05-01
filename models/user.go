@@ -97,3 +97,8 @@ func UpdateUser(u User, itemID int) error {
 
 	return boltDB.Update(userMap, UserTableName, uint64(itemID))
 }
+
+func DeleteUser(itemID int) error {
+
+	return boltDB.Delete(UserTableName, uint64(itemID))
+}
