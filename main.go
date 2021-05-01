@@ -45,6 +45,7 @@ func main() {
 	http.HandleFunc("/get-picture", getPicture)
 	http.Handle("/dashboard", auth.Authorize(dashboard))
 	http.Handle("/new-note", auth.Authorize(newNote))
+	http.Handle("/update-note", auth.Authorize(updateNote))
 
 	err := http.ListenAndServe(":3000", nil)
 

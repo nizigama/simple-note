@@ -327,6 +327,66 @@ func dashboard(w http.ResponseWriter, req *http.Request) {
 	tpl.ExecuteTemplate(w, "dashboard.html", data)
 }
 
+func updateNote(w http.ResponseWriter, req *http.Request) {
+	noteID := req.FormValue("noteID")
+
+	id, err := strconv.Atoi(noteID)
+
+	if err != nil {
+		http.Error(w, "Invalid noteID", http.StatusUnprocessableEntity)
+	}
+
+	note, err := models.ReadNote(uint64(id))
+
+	if err != nil {
+		http.Error(w, "No note found with ID", http.StatusNotFound)
+		return
+	}
+
+	if req.Method == http.MethodPost {
+
+		if err := req.ParseForm(); err != nil {
+			http.Error(w, "Error parsing your request", http.StatusUnprocessableEntity)
+		}
+
+		title, note := req.Form.Get("title"), req.Form.Get("note")
+
+		if strings.Trim(title, " ") == "" {
+			http.Error(w, "Note title is required", http.StatusUnprocessableEntity)
+			return
+		}
+		if strings.Trim(note, " ") == "" {
+			http.Error(w, "note is required", http.StatusUnprocessableEntity)
+			return
+		}
+
+		updatedNote := models.Note{
+			Title: title,
+			Body:  note,
+		}
+
+		err = models.UpdateNote(updatedNote, id)
+
+		if err != nil {
+			http.Error(w, "Failed to update the note, Contact support", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Location", "/dashboard")
+		w.WriteHeader(http.StatusSeeOther)
+		return
+	}
+
+	data := map[string]interface{}{
+		"note": note,
+		"year": time.Now().Year(),
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	tpl.ExecuteTemplate(w, "updateNote.html", data)
+
+}
+
 func validateEmail(email string) error {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
