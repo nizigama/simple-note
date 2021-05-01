@@ -417,6 +417,30 @@ func deleteNote(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func logout(w http.ResponseWriter, req *http.Request) {
+	c, _ := req.Cookie("sessionID")
+
+	var sessionID int
+
+	for k, v := range auth.Sessions {
+		if c.Value == strconv.Itoa(int(v.ID)) {
+			sessionID = k
+			break
+		}
+	}
+
+	first := auth.Sessions[:sessionID]
+	second := auth.Sessions[sessionID+1:]
+
+	auth.Sessions = append(first, second...)
+
+	c.MaxAge = -1
+	http.SetCookie(w, c)
+
+	w.Header().Set("Location", "/login")
+	w.WriteHeader(http.StatusSeeOther)
+}
+
 func validateEmail(email string) error {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {

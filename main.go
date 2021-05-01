@@ -47,6 +47,7 @@ func main() {
 	http.Handle("/new-note", auth.Authorize(newNote))
 	http.Handle("/update-note", auth.Authorize(updateNote))
 	http.Handle("/delete-note", auth.Authorize(deleteNote))
+	http.Handle("/logout", auth.Authorize(logout))
 
 	err := http.ListenAndServe(":3000", nil)
 
