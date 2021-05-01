@@ -221,6 +221,10 @@ func profile(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Error updating database", http.StatusInternalServerError)
 			return
 		}
+
+		w.Header().Set("Location", "/profile")
+		w.WriteHeader(http.StatusSeeOther)
+		return
 	}
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
