@@ -27,8 +27,9 @@ func index(w http.ResponseWriter, req *http.Request) {
 
 	c, err := req.Cookie("sessionID")
 	data := map[string]interface{}{
-		"year":     time.Now().Year(),
 		"loggedIn": false,
+		"users":    []users.User{},
+		"year":     time.Now().Year(),
 	}
 
 	if err == nil {
@@ -44,6 +45,15 @@ func index(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 	}
+
+	allUsers, err := users.ReadAll()
+
+	if err != nil {
+		http.Error(w, "Error getting all app users", http.StatusInternalServerError)
+		return
+	}
+
+	data["users"] = allUsers
 
 	w.Header().Set("Content-Type", "text/html")
 	tpl.ExecuteTemplate(w, "index.html", data)
@@ -91,7 +101,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			Value: strconv.Itoa(int(sessionID)),
 		})
 
-		w.Header().Set("Location", "/profile")
+		w.Header().Set("Location", "/dashboard")
 		w.WriteHeader(http.StatusSeeOther)
 
 	}
@@ -171,7 +181,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			Value: strconv.Itoa(int(sessionID)),
 		})
 
-		w.Header().Set("Location", "/profile")
+		w.Header().Set("Location", "/dashboard")
 		w.WriteHeader(http.StatusSeeOther)
 
 	} else {
@@ -240,6 +250,20 @@ func profilePicture(w http.ResponseWriter, req *http.Request) {
 	user, _ := getLoggedInUser(req)
 
 	http.ServeFile(w, req, "assets/"+user.Picture)
+}
+
+func getPicture(w http.ResponseWriter, req *http.Request) {
+
+	picture := req.FormValue("name")
+
+	_, err := os.Open("assets/" + picture)
+
+	if err != nil {
+		http.ServeFile(w, req, "assets/avatar.png")
+		return
+	}
+
+	http.ServeFile(w, req, "assets/"+picture)
 }
 
 func validateEmail(email string) error {
