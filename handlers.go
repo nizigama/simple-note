@@ -447,6 +447,55 @@ func logout(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusSeeOther)
 }
 
+func deleteAccount(w http.ResponseWriter, req *http.Request) {
+	c, _ := req.Cookie("sessionID")
+
+	var sessionID int
+	var userID int
+
+	for k, v := range auth.Sessions {
+		if c.Value == strconv.Itoa(int(v.ID)) {
+			sessionID = k
+			userID = v.UserID
+			break
+		}
+	}
+
+	allNotes, err := models.ReadAllUserNotes(userID)
+
+	if err != nil {
+		http.Error(w, "Error getting user's notes", http.StatusInternalServerError)
+		return
+	}
+
+	for _, note := range allNotes {
+		err = models.DeleteNote(note.ID)
+
+		if err != nil {
+			http.Error(w, "Failed to delete note", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	err = models.DeleteUser(userID)
+
+	if err != nil {
+		http.Error(w, "Failed to delete the user", http.StatusInternalServerError)
+		return
+	}
+
+	first := auth.Sessions[:sessionID]
+	second := auth.Sessions[sessionID+1:]
+
+	auth.Sessions = append(first, second...)
+
+	c.MaxAge = -1
+	http.SetCookie(w, c)
+
+	w.Header().Set("Location", "/login")
+	w.WriteHeader(http.StatusSeeOther)
+}
+
 func validateEmail(email string) error {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
