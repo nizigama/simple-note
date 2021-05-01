@@ -135,6 +135,7 @@ func All(tableName string) ([]map[string]interface{}, error) {
 			if err != nil {
 				return err
 			}
+			itemData["itemID"] = binary.LittleEndian.Uint64(k)
 
 			itemsData = append(itemsData, itemData)
 
