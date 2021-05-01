@@ -241,6 +241,51 @@ func ManyByStringField(tableName, fieldName, fieldValue string) ([]map[string]in
 	return matchingItemsData, nil
 }
 
+func ManyByIntField(tableName, fieldName string, fieldValue int) ([]map[string]interface{}, error) {
+
+	var matchingItemsData []map[string]interface{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		err = b.ForEach(func(k []byte, v []byte) error {
+
+			itemData := map[string]interface{}{}
+
+			err = json.Unmarshal(v, &itemData)
+
+			if err != nil {
+				return err
+			}
+
+			itemData["itemID"] = binary.LittleEndian.Uint64(k)
+
+			if itemData[fieldName].(float64) == float64(fieldValue) {
+				matchingItemsData = append(matchingItemsData, itemData)
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			return fmt.Errorf("no such item found")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return matchingItemsData, nil
+}
+
 func Update(item map[string]interface{}, tableName string, itemID uint64) error {
 
 	xi, err := json.Marshal(item)
