@@ -270,7 +270,7 @@ func Update(item map[string]interface{}, tableName string, itemID uint64) error 
 		err = b.Delete(id)
 
 		if err != nil {
-			return fmt.Errorf("error deleting user")
+			return fmt.Errorf("error deleting old item")
 		}
 
 		return nil
@@ -294,6 +294,42 @@ func Update(item map[string]interface{}, tableName string, itemID uint64) error 
 
 		return b.Put(id, xi)
 	})
+
+	return nil
+}
+
+func Delete(tableName string, itemID uint64) error {
+
+	err = db.Update(func(tx *bolt.Tx) error {
+
+		b := tx.Bucket([]byte(tableName))
+
+		if b == nil {
+			return fmt.Errorf("no such table found")
+		}
+
+		id := make([]byte, 8)
+
+		binary.LittleEndian.PutUint32(id, uint32(itemID))
+
+		result := b.Get(id)
+
+		if result == nil {
+			return fmt.Errorf("no item found")
+		}
+
+		err = b.Delete(id)
+
+		if err != nil {
+			return fmt.Errorf("error deleting item")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
