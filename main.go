@@ -46,6 +46,7 @@ func main() {
 	http.Handle("/dashboard", auth.Authorize(dashboard))
 	http.Handle("/new-note", auth.Authorize(newNote))
 	http.Handle("/update-note", auth.Authorize(updateNote))
+	http.Handle("/delete-note", auth.Authorize(deleteNote))
 
 	err := http.ListenAndServe(":3000", nil)
 

@@ -334,6 +334,7 @@ func updateNote(w http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		http.Error(w, "Invalid noteID", http.StatusUnprocessableEntity)
+		return
 	}
 
 	note, err := models.ReadNote(uint64(id))
@@ -384,6 +385,35 @@ func updateNote(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html")
 	tpl.ExecuteTemplate(w, "updateNote.html", data)
+
+}
+
+func deleteNote(w http.ResponseWriter, req *http.Request) {
+	noteID := req.FormValue("noteID")
+
+	id, err := strconv.Atoi(noteID)
+
+	if err != nil {
+		http.Error(w, "Invalid noteID", http.StatusUnprocessableEntity)
+		return
+	}
+
+	_, err = models.ReadNote(uint64(id))
+
+	if err != nil {
+		http.Error(w, "No note found with ID", http.StatusNotFound)
+		return
+	}
+
+	err = models.DeleteNote(id)
+
+	if err != nil {
+		http.Error(w, "Failed to delete note", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Location", "/dashboard")
+	w.WriteHeader(http.StatusSeeOther)
 
 }
 
