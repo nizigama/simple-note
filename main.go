@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	users "github.com/nizigama/simple-note/models"
+	"github.com/nizigama/simple-note/models"
 	boltDB "github.com/nizigama/simple-note/services/database"
 	auth "github.com/nizigama/simple-note/services/middleware"
 )
@@ -29,7 +29,7 @@ func init() {
 
 	logger = log.New(logFile, "simple-note-app:", log.Ldate)
 
-	boltDB.InitDBConnection(logger, users.TableName)
+	boltDB.InitDBConnection(logger, models.UserTableName, models.NoteTableName)
 }
 
 func main() {
@@ -43,6 +43,8 @@ func main() {
 	http.Handle("/profile", auth.Authorize(profile))
 	http.Handle("/profile-picture", auth.Authorize(profilePicture))
 	http.HandleFunc("/get-picture", getPicture)
+	http.Handle("/dashboard", auth.Authorize(dashboard))
+	http.Handle("/new-note", auth.Authorize(newNote))
 
 	err := http.ListenAndServe(":3000", nil)
 

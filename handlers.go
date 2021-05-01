@@ -11,7 +11,7 @@ import (
 	"text/template"
 	"time"
 
-	users "github.com/nizigama/simple-note/models"
+	models "github.com/nizigama/simple-note/models"
 	auth "github.com/nizigama/simple-note/services/middleware"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,7 +28,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 	c, err := req.Cookie("sessionID")
 	data := map[string]interface{}{
 		"loggedIn": false,
-		"users":    []users.User{},
+		"users":    []models.User{},
 		"year":     time.Now().Year(),
 	}
 
@@ -46,7 +46,7 @@ func index(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	allUsers, err := users.ReadAll()
+	allUsers, err := models.ReadAllUsers()
 
 	if err != nil {
 		http.Error(w, "Error getting all app users", http.StatusInternalServerError)
@@ -77,7 +77,7 @@ func login(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		user, userID, err := users.ReadSingleByEmail(email)
+		user, userID, err := models.ReadSingleUserByEmail(email)
 		if err != nil {
 			http.Error(w, "Wrong credentials, there is no such email in our records", http.StatusForbidden)
 			return
@@ -155,7 +155,7 @@ func register(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		newUser := users.User{
+		newUser := models.User{
 			FirstName: firstName,
 			LastName:  lastName,
 			Email:     email,
@@ -227,7 +227,7 @@ func profile(w http.ResponseWriter, req *http.Request) {
 
 		user.Picture = fileName
 
-		if err := users.UpdateUser(user, userID); err != nil {
+		if err := models.UpdateUser(user, userID); err != nil {
 			http.Error(w, "Error updating database", http.StatusInternalServerError)
 			return
 		}
@@ -266,6 +266,67 @@ func getPicture(w http.ResponseWriter, req *http.Request) {
 	http.ServeFile(w, req, "assets/"+picture)
 }
 
+func newNote(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method == http.MethodPost {
+
+		if err := req.ParseForm(); err != nil {
+			http.Error(w, "Error parsing your request", http.StatusUnprocessableEntity)
+		}
+
+		title, note := req.Form.Get("title"), req.Form.Get("note")
+
+		if strings.Trim(title, " ") == "" {
+			http.Error(w, "Note title is required", http.StatusUnprocessableEntity)
+			return
+		}
+		if strings.Trim(note, " ") == "" {
+			http.Error(w, "note is required", http.StatusUnprocessableEntity)
+			return
+		}
+
+		newNote := models.Note{
+			Title: title,
+			Body:  note,
+		}
+
+		_, err := newNote.Save()
+
+		if err != nil {
+			http.Error(w, "Failed to save the note, Contact support", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Location", "/dashboard")
+		w.WriteHeader(http.StatusSeeOther)
+
+	} else {
+		data := map[string]interface{}{
+			"year": time.Now().Year(),
+		}
+		w.Header().Set("Content-Type", "text/html")
+		tpl.ExecuteTemplate(w, "note.html", data)
+	}
+}
+
+func dashboard(w http.ResponseWriter, req *http.Request) {
+	data := map[string]interface{}{
+		"notes": []models.Note{},
+		"year":  time.Now().Year(),
+	}
+
+	allNotes, err := models.ReadAllNotes()
+
+	if err != nil {
+		http.Error(w, "Error getting all app users", http.StatusInternalServerError)
+		return
+	}
+
+	data["notes"] = allNotes
+
+	tpl.ExecuteTemplate(w, "dashboard.html", data)
+}
+
 func validateEmail(email string) error {
 
 	if !strings.Contains(email, "@") || !strings.Contains(email, ".") {
@@ -293,17 +354,17 @@ func validateEmail(email string) error {
 	return nil
 }
 
-func getLoggedInUser(req *http.Request) (users.User, int) {
+func getLoggedInUser(req *http.Request) (models.User, int) {
 
 	c, _ := req.Cookie("sessionID")
 
-	var user users.User
+	var user models.User
 	var userID int
 
 	for _, v := range auth.Sessions {
 		if c.Value == strconv.Itoa(int(v.ID)) {
 			userID = v.UserID
-			user, _ = users.Read(uint64(v.UserID))
+			user, _ = models.ReadUser(uint64(v.UserID))
 			break
 		}
 	}

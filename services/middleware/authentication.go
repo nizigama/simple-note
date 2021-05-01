@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	users "github.com/nizigama/simple-note/models"
+	"github.com/nizigama/simple-note/models"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,7 +31,7 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 		}
 		for _, v := range Sessions {
 			if c.Value == strconv.Itoa(int(v.ID)) {
-				_, err := users.Read(uint64(v.UserID))
+				_, err := models.ReadUser(uint64(v.UserID))
 				if err != nil {
 					// no user found
 					if req.URL.Path == "/login" || req.URL.Path == "/register" {

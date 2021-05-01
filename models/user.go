@@ -1,4 +1,4 @@
-package users
+package models
 
 import (
 	boltDB "github.com/nizigama/simple-note/services/database"
@@ -13,7 +13,7 @@ type User struct {
 }
 
 const (
-	TableName string = "Users"
+	UserTableName string = "Users"
 )
 
 // Save persists the user in the struct in the database
@@ -27,12 +27,12 @@ func (u User) Save() (uint64, error) {
 		"picture":   "avatar.png",
 	}
 
-	return boltDB.Store(userMap, TableName)
+	return boltDB.Store(userMap, UserTableName)
 }
 
-func Read(userID uint64) (User, error) {
+func ReadUser(userID uint64) (User, error) {
 
-	user, err := boltDB.Show(userID, TableName)
+	user, err := boltDB.Show(userID, UserTableName)
 
 	if err != nil {
 		return User{}, err
@@ -47,10 +47,10 @@ func Read(userID uint64) (User, error) {
 	}, nil
 }
 
-func ReadAll() ([]User, error) {
+func ReadAllUsers() ([]User, error) {
 
 	var users []User
-	res, err := boltDB.All(TableName)
+	res, err := boltDB.All(UserTableName)
 
 	if err != nil {
 		return nil, err
@@ -69,9 +69,9 @@ func ReadAll() ([]User, error) {
 	return users, nil
 }
 
-func ReadSingleByEmail(userEmail string) (User, uint64, error) {
+func ReadSingleUserByEmail(userEmail string) (User, uint64, error) {
 
-	user, index, err := boltDB.SingleByStringField(TableName, "email", userEmail)
+	user, index, err := boltDB.SingleByStringField(UserTableName, "email", userEmail)
 
 	if err != nil {
 		return User{}, 0, err
@@ -95,5 +95,5 @@ func UpdateUser(u User, itemID int) error {
 		"picture":   u.Picture,
 	}
 
-	return boltDB.Update(userMap, TableName, uint64(itemID))
+	return boltDB.Update(userMap, UserTableName, uint64(itemID))
 }
