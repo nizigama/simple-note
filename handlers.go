@@ -267,7 +267,7 @@ func getPicture(w http.ResponseWriter, req *http.Request) {
 }
 
 func newNote(w http.ResponseWriter, req *http.Request) {
-
+	_, userID := getLoggedInUser(req)
 	if req.Method == http.MethodPost {
 
 		if err := req.ParseForm(); err != nil {
@@ -286,8 +286,9 @@ func newNote(w http.ResponseWriter, req *http.Request) {
 		}
 
 		newNote := models.Note{
-			Title: title,
-			Body:  note,
+			Title:   title,
+			Body:    note,
+			OwnerID: userID,
 		}
 
 		_, err := newNote.Save()
@@ -315,9 +316,12 @@ func dashboard(w http.ResponseWriter, req *http.Request) {
 		"year":  time.Now().Year(),
 	}
 
-	allNotes, err := models.ReadAllNotes()
+	_, userID := getLoggedInUser(req)
+
+	allNotes, err := models.ReadAllUserNotes(userID)
 
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Error getting all app users", http.StatusInternalServerError)
 		return
 	}
@@ -331,6 +335,7 @@ func updateNote(w http.ResponseWriter, req *http.Request) {
 	noteID := req.FormValue("noteID")
 
 	id, err := strconv.Atoi(noteID)
+	_, userID := getLoggedInUser(req)
 
 	if err != nil {
 		http.Error(w, "Invalid noteID", http.StatusUnprocessableEntity)
@@ -362,8 +367,9 @@ func updateNote(w http.ResponseWriter, req *http.Request) {
 		}
 
 		updatedNote := models.Note{
-			Title: title,
-			Body:  note,
+			Title:   title,
+			Body:    note,
+			OwnerID: userID,
 		}
 
 		err = models.UpdateNote(updatedNote, id)

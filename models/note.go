@@ -5,9 +5,10 @@ import (
 )
 
 type Note struct {
-	ID    int
-	Title string
-	Body  string
+	ID      int
+	Title   string
+	Body    string
+	OwnerID int
 }
 
 const (
@@ -18,8 +19,9 @@ const (
 func (n Note) Save() (uint64, error) {
 
 	simpleNote := map[string]interface{}{
-		"title": n.Title,
-		"note":  n.Body,
+		"title":   n.Title,
+		"note":    n.Body,
+		"ownerID": n.OwnerID,
 	}
 
 	return boltDB.Store(simpleNote, NoteTableName)
@@ -34,15 +36,16 @@ func ReadNote(noteID uint64) (Note, error) {
 	}
 
 	return Note{
-		Title: simpleNote["title"].(string),
-		Body:  simpleNote["note"].(string),
+		Title:   simpleNote["title"].(string),
+		Body:    simpleNote["note"].(string),
+		OwnerID: int(simpleNote["ownerID"].(float64)),
 	}, nil
 }
 
-func ReadAllNotes() ([]Note, error) {
+func ReadAllUserNotes(userID int) ([]Note, error) {
 
 	var notes []Note
-	res, err := boltDB.All(NoteTableName)
+	res, err := boltDB.ManyByIntField(NoteTableName, "ownerID", userID)
 
 	if err != nil {
 		return nil, err
@@ -50,9 +53,10 @@ func ReadAllNotes() ([]Note, error) {
 
 	for _, simpleNote := range res {
 		notes = append(notes, Note{
-			ID:    int(simpleNote["itemID"].(uint64)),
-			Title: simpleNote["title"].(string),
-			Body:  simpleNote["note"].(string),
+			ID:      int(simpleNote["itemID"].(uint64)),
+			Title:   simpleNote["title"].(string),
+			Body:    simpleNote["note"].(string),
+			OwnerID: int(simpleNote["ownerID"].(float64)),
 		})
 	}
 
@@ -61,8 +65,9 @@ func ReadAllNotes() ([]Note, error) {
 
 func UpdateNote(n Note, itemID int) error {
 	simpleNote := map[string]interface{}{
-		"title": n.Title,
-		"note":  n.Body,
+		"title":   n.Title,
+		"note":    n.Body,
+		"ownerID": n.OwnerID,
 	}
 
 	return boltDB.Update(simpleNote, NoteTableName, uint64(itemID))
