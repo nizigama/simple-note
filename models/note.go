@@ -67,3 +67,8 @@ func UpdateNote(n Note, itemID int) error {
 
 	return boltDB.Update(simpleNote, NoteTableName, uint64(itemID))
 }
+
+func DeleteNote(itemID int) error {
+
+	return boltDB.Delete(NoteTableName, uint64(itemID))
+}
