@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/nizigama/simple-note/controllers"
 	"github.com/nizigama/simple-note/models"
 	boltDB "github.com/nizigama/simple-note/services/database"
 	auth "github.com/nizigama/simple-note/services/middleware"
@@ -39,23 +40,32 @@ func main() {
 	defer handlePanic()
 
 	r := mux.NewRouter()
+	hc := controllers.NewHomeController()
+	lc := controllers.NewLoginController()
+	rc := controllers.NewRegisterController()
+	ac := controllers.NewAccountController()
+	dc := controllers.NewDashboardController()
+	nc := controllers.NewNoteController()
 
-	r.HandleFunc("/", index).Methods("GET")
-	r.Handle("/login", auth.Authorize(login))
-	r.Handle("/register", auth.Authorize(register))
-	r.Handle("/profile", auth.Authorize(profile))
-	r.Handle("/profile-picture", auth.Authorize(profilePicture)).Methods("GET")
-	r.HandleFunc("/get-picture", getPicture).Methods("GET")
-	r.Handle("/dashboard", auth.Authorize(dashboard)).Methods("GET")
-	r.Handle("/new-note", auth.Authorize(newNote))
-	r.Handle("/update-note", auth.Authorize(updateNote))
-	r.Handle("/delete-note", auth.Authorize(deleteNote)).Methods("GET")
-	r.Handle("/logout", auth.Authorize(logout)).Methods("GET")
-	r.Handle("/delete-account", auth.Authorize(deleteAccount)).Methods("GET")
+	r.HandleFunc("/", hc.Index).Methods("GET")
+	r.Handle("/login", auth.Authorize(lc.Index)).Methods("GET")
+	r.Handle("/login", auth.Authorize(lc.Login)).Methods("POST")
+	r.Handle("/register", auth.Authorize(rc.Index)).Methods("GET")
+	r.Handle("/register", auth.Authorize(rc.Create)).Methods("POST")
+	r.Handle("/logout", auth.Authorize(lc.Logout)).Methods("GET")
+	r.Handle("/profile", auth.Authorize(ac.Index)).Methods("GET")
+	r.Handle("/profile", auth.Authorize(ac.Save)).Methods("POST")
+	r.Handle("/profile-picture", auth.Authorize(ac.ProfilePicture)).Methods("GET")
+	r.HandleFunc("/get-picture", ac.GetPicture).Methods("GET")
+	r.Handle("/delete-account", auth.Authorize(ac.DeleteAccount)).Methods("GET")
+	r.Handle("/dashboard", auth.Authorize(dc.Index)).Methods("GET")
+	r.Handle("/new-note", auth.Authorize(nc.Index)).Methods("GET")
+	r.Handle("/new-note", auth.Authorize(nc.Create)).Methods("POST")
+	r.Handle("/update-note", auth.Authorize(nc.Edit)).Methods("GET")
+	r.Handle("/update-note", auth.Authorize(nc.Update)).Methods("POST")
+	r.Handle("/delete-note", auth.Authorize(nc.Delete)).Methods("GET")
 
-	http.Handle("/", r)
-
-	err := http.ListenAndServe(":3000", nil)
+	err := http.ListenAndServe(":3000", r)
 
 	if err != nil {
 		logger.Fatalln("Error starting the server, here is the error:", err)

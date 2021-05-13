@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/nizigama/simple-note/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Session struct {
@@ -64,14 +63,6 @@ func Authorize(f func(http.ResponseWriter, *http.Request)) http.Handler {
 	})
 }
 
-func CheckCredentials(storedPassword, givenPassword []byte) error {
-
-	if err := bcrypt.CompareHashAndPassword(storedPassword, givenPassword); err != nil {
-		return err
-	}
-	return nil
-}
-
 func CreateSession(sessionID uint64, userID int) {
 	newSession := Session{
 		ID:     sessionID,
@@ -79,4 +70,22 @@ func CreateSession(sessionID uint64, userID int) {
 	}
 
 	Sessions = append(Sessions, newSession)
+}
+
+func GetLoggedInUser(req *http.Request) (models.User, int) {
+
+	c, _ := req.Cookie("sessionID")
+
+	var user models.User
+	var userID int
+
+	for _, v := range Sessions {
+		if c.Value == strconv.Itoa(int(v.ID)) {
+			userID = v.UserID
+			user, _ = models.ReadUser(uint64(v.UserID))
+			break
+		}
+	}
+
+	return user, userID
 }
