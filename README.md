@@ -33,7 +33,7 @@ This will install all the required packages
 Run the following command to boot up the server and start using the application on http://127.0.0.1:3000
 
 ```
-go run *.go
+go run main.go
 ```
 
 ## License
