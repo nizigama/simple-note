@@ -9,11 +9,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/nizigama/simple-note/controllers"
 	"github.com/nizigama/simple-note/models"
-	boltDB "github.com/nizigama/simple-note/services/database"
+	mysqlDB "github.com/nizigama/simple-note/services/database"
 	auth "github.com/nizigama/simple-note/services/middleware"
 )
 
-// TODO: work on login feature
 var (
 	logger  *log.Logger
 	logFile *os.File
@@ -31,11 +30,12 @@ func init() {
 
 	logger = log.New(logFile, "simple-note-app:", log.Ldate)
 
-	boltDB.InitDBConnection(logger, models.UserTableName, models.NoteTableName)
+	mysqlDB.InitDBConnection(logger, models.UserMigration, models.NoteMigration)
+
 }
 
 func main() {
-	defer boltDB.CloseDBConnection()
+	defer mysqlDB.CloseDBConnection()
 	defer logFile.Close()
 	defer handlePanic()
 

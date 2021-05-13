@@ -1,7 +1,9 @@
 package models
 
 import (
-	boltDB "github.com/nizigama/simple-note/services/database"
+	"fmt"
+
+	mysqlDB "github.com/nizigama/simple-note/services/database"
 )
 
 type User struct {
@@ -12,58 +14,98 @@ type User struct {
 	Picture   string
 }
 
-const (
-	UserTableName string = "Users"
+var (
+	UserMigration mysqlDB.Migration = mysqlDB.Migration{
+		TableName: "Users",
+		Definition: []mysqlDB.Column{
+			{
+				Name:  "id",
+				Type:  "int",
+				Extra: "auto_increment",
+				Key:   "primary key",
+			},
+			{
+				Name: "firstName",
+				Type: "varchar(255)",
+			},
+			{
+				Name: "lastName",
+				Type: "varchar(255)",
+			},
+			{
+				Name: "email",
+				Type: "varchar(255)",
+			},
+			{
+				Name: "password",
+				Type: "varchar(255)",
+			},
+			{
+				Name: "picture",
+				Type: "varchar(255)",
+			},
+		},
+	}
+
+	defaultPicture string = "avatar.png"
 )
 
 // Save persists the user in the struct in the database
 func (u User) Save() (uint64, error) {
 
-	userMap := map[string]interface{}{
-		"firstName": u.FirstName,
-		"lastName":  u.LastName,
-		"email":     u.Email,
-		"password":  u.Password,
-		"picture":   "avatar.png",
+	query := fmt.Sprintf("INSERT INTO %s(firstName, lastName, email, password, picture) VALUES(?,?,?,?,\"%s\")", UserMigration.TableName, defaultPicture)
+
+	r, err := mysqlDB.MysqlDB.Exec(query, u.FirstName, u.LastName, u.Email, u.Password)
+
+	if err != nil {
+		return 0, err
 	}
 
-	return boltDB.Store(userMap, UserTableName)
+	var userID int64
+
+	if userID, err = r.LastInsertId(); err != nil {
+		return 0, err
+	}
+
+	return uint64(userID), nil
 }
 
 func ReadUser(userID uint64) (User, error) {
 
-	user, err := boltDB.Show(userID, UserTableName)
+	query := fmt.Sprintf("SELECT firstName, lastName, email, password, picture FROM %s WHERE id = ?", UserMigration.TableName)
+	row := mysqlDB.MysqlDB.QueryRow(query, int(userID))
+
+	var user User
+
+	err := row.Scan(&user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Picture)
 
 	if err != nil {
 		return User{}, err
 	}
 
-	return User{
-		FirstName: user["firstName"].(string),
-		LastName:  user["lastName"].(string),
-		Email:     user["email"].(string),
-		Password:  user["password"].(string),
-		Picture:   user["picture"].(string),
-	}, nil
+	return user, nil
 }
 
 func ReadAllUsers() ([]User, error) {
 
 	var users []User
-	res, err := boltDB.All(UserTableName)
+	query := fmt.Sprintf("SELECT firstName, lastName, email, password, picture FROM %s", UserMigration.TableName)
+	rows, err := mysqlDB.MysqlDB.Query(query)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, user := range res {
-		users = append(users, User{
-			FirstName: user["firstName"].(string),
-			LastName:  user["lastName"].(string),
-			Email:     user["email"].(string),
-			Password:  user["password"].(string),
-			Picture:   user["picture"].(string),
-		})
+	for rows.Next() {
+		user := User{}
+
+		err := rows.Scan(&user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Picture)
+
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
 	}
 
 	return users, nil
@@ -71,34 +113,43 @@ func ReadAllUsers() ([]User, error) {
 
 func ReadSingleUserByEmail(userEmail string) (User, uint64, error) {
 
-	user, index, err := boltDB.SingleByStringField(UserTableName, "email", userEmail)
+	query := fmt.Sprintf("SELECT id, firstName, lastName, email, password, picture FROM %s WHERE email = ?", UserMigration.TableName)
+	row := mysqlDB.MysqlDB.QueryRow(query, userEmail)
+
+	var user User
+	var userID int
+
+	err := row.Scan(&userID, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Picture)
 
 	if err != nil {
 		return User{}, 0, err
 	}
 
-	return User{
-		FirstName: user["firstName"].(string),
-		LastName:  user["lastName"].(string),
-		Email:     user["email"].(string),
-		Password:  user["password"].(string),
-		Picture:   user["picture"].(string),
-	}, index, nil
+	return user, uint64(userID), nil
 }
 
 func UpdateUser(u User, itemID int) error {
-	userMap := map[string]interface{}{
-		"firstName": u.FirstName,
-		"lastName":  u.LastName,
-		"email":     u.Email,
-		"password":  u.Password,
-		"picture":   u.Picture,
+
+	query := fmt.Sprintf("UPDATE %s SET firstName = ?, lastName = ?, email = ?, password = ?, picture = ? WHERE id = ?", UserMigration.TableName)
+
+	_, err := mysqlDB.MysqlDB.Exec(query, u.FirstName, u.LastName, u.Email, u.Password, u.Picture, itemID)
+
+	if err != nil {
+		return err
 	}
 
-	return boltDB.Update(userMap, UserTableName, uint64(itemID))
+	return nil
 }
 
 func DeleteUser(itemID int) error {
 
-	return boltDB.Delete(UserTableName, uint64(itemID))
+	query := fmt.Sprintf("DELETE FROM %s WHERE id = ?", UserMigration.TableName)
+
+	_, err := mysqlDB.MysqlDB.Exec(query, itemID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
