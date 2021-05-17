@@ -86,6 +86,8 @@ func ReadAllUserNotes(userID int) ([]Note, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		note := Note{}
 

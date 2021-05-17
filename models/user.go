@@ -96,6 +96,8 @@ func ReadAllUsers() ([]User, error) {
 		return nil, err
 	}
 
+	defer rows.Close()
+
 	for rows.Next() {
 		user := User{}
 
